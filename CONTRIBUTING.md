@@ -28,13 +28,12 @@ Our goal is to maintain a welcoming, collaborative, and high-quality open-source
 
 # 🌍 Code of Conduct
 
-By participating in this project, you agree to:
+Please follow our [Code of Conduct](CODE_OF_CONDUCT.md) when contributing to this project.
 
-* Be respectful and inclusive.
-* Provide constructive feedback.
-* Welcome contributors of all skill levels.
-* Maintain a positive and collaborative environment.
-
+We expect all contributors to:
+- Be respectful and inclusive.
+- Provide constructive feedback.
+- Maintain a positive and collaborative environment.
 ---
 
 # 🚀 Ways to Contribute
