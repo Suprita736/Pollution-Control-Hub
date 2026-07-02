@@ -141,8 +141,7 @@ export async function fetchAirQualityByCoords(lat, lon) {
   return {
     current,
     trend,
-    nearbyPoints
-    nearbyPoints: buildNearbyPoints(lat, lon, current.us_aqi),
+    nearbyPoints,
     confidenceScore,
     dataCompleteness
   };
