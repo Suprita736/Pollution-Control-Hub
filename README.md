@@ -38,8 +38,9 @@ Urban air pollution is a silent crisis affecting millions of lives daily. While 
 - **Compare Cities:** Multi-city graphical comparison interface built on React-Recharts.
 
 ### 📍 Interactive Geospatial Mapping
-- **Hotspot Map:** Built on Leaflet maps with custom markers showing user-reported pollution sites.
+- **Hotspot Map:** Built on Leaflet maps with real AQI-sampled markers. A 3×3 grid of coordinates is queried around the user's location via Open-Meteo, and the top hotspots are ranked and labeled by cardinal direction (e.g. "North-East zone").
 - **Geolocation Support:** Automatically pins the user's location to center calculations and alerts on nearest hotspots.
+- **Grid Result Caching:** Nearby grid results are cached for 5 minutes to avoid redundant API calls on rapid refreshes.
 
 ### 🔔 Smart Alert Notification System
 - **Exceedance Alerts:** Prompts immediate browser push notifications when local AQI exceeds configured threshold limits.
