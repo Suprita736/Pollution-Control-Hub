@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 
 const STORAGE_KEY = 'pollution-community-reports';
+const VOTES_STORAGE_KEY = 'pollution-comm img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const scale = Math.min(maxWidth / img.width, 1);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext('2d');
+      ctxunity-votes';
 const VOTE_THRESHOLD = 5; 
 const X_DAYS = 7;
 const MAX_IMAGE_SIZE_BYTES = 500 * 1024; // 500 KB
@@ -16,13 +23,7 @@ const STORAGE_WARN_THRESHOLD = 5 * 1024 * 1024; // 5 MB warning
 function compressImage(dataUrl, maxWidth = 800, quality = 0.7) {
   return new Promise((resolve) => {
     const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const scale = Math.min(maxWidth / img.width, 1);
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+   .drawImage(img, 0, 0, canvas.width, canvas.height);
       resolve(canvas.toDataURL('image/jpeg', quality));
     };
     img.src = dataUrl;
@@ -101,7 +102,11 @@ export default function CommunityHub() {
   }, [reports]);
 
   useEffect(() => {
-    localStorage.setItem(VOTES_STORAGE_KEY, JSON.stringify([...votedIds]));
+    try {
+      localStorage.setItem(VOTES_STORAGE_KEY, JSON.stringify([...votedIds]));
+    } catch (e) {
+      console.error('Failed to persist community votes to localStorage:', e);
+    }
   }, [votedIds]);
 
   const onSubmit = (event) => {
