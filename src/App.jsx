@@ -91,8 +91,12 @@ function SectionNav({ activeSection, onSectionChange, theme, onToggleTheme }) {
   const isDark = theme === 'dark';
 
   return (
-    <nav className="section-nav" aria-label="Main sections">
-      <div className="nav-sections">
+    <nav 
+      className="section-nav" 
+      aria-label="Main sections"
+      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}
+    >
+      <div className="nav-sections" style={{ display: 'flex', gap: '0.5rem' }}>
         {sections.map((section) => (
           <button
             key={section.id}
@@ -326,8 +330,10 @@ export default function App() {
 
   return (
     <main className="app-shell">
-      <Hero cityName={position.cityName} />
+      {/* 1. Structural fix: Renders the navigation element at the very top */}
       <SectionNav activeSection={activeSection} onSectionChange={setActiveSection} theme={theme} onToggleTheme={toggleTheme} />
+      
+      <Hero cityName={position.cityName} />
 
       {activeSection === 'home' && (
         <AppControls
