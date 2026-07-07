@@ -182,7 +182,8 @@ a {
 .hero {
   position: relative;
   isolation: isolate;
-  margin: var(--sp-5) var(--sp-4) var(--sp-6);
+  width: min(1180px, 94vw);
+  margin: var(--sp-3) auto var(--sp-4);
   border-radius: var(--r-lg);
   overflow: hidden;
   background: linear-gradient(120deg, #0284c7 10%, #00ffea 90%);
@@ -216,7 +217,7 @@ a {
 
 .hero-content {
   position: relative;
-  padding: var(--sp-8) var(--sp-6);
+  padding: var(--sp-5) var(--sp-6);
   max-width: 780px;
   animation: rise-in 700ms var(--ease) both;
 }
@@ -235,7 +236,7 @@ a {
 }
 
 .hero h1 {
-  font-size: clamp(2.1rem, 4.5vw, 3.4rem);
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
   line-height: 1.08;
   margin-bottom: var(--sp-3);
 }
@@ -2079,4 +2080,59 @@ a {
   .footer-brand {
     text-align: left;
   }
+}
+
+/* ==========================================================================
+   Historical Analysis & Calendar Heatmap
+   ========================================================================== */
+.history-layout {
+  animation: fadeSlideUp var(--transition-bounce) forwards;
+}
+
+.calendar-heatmap-empty {
+  padding: 3rem;
+  text-align: center;
+  color: var(--text-color);
+  opacity: 0.6;
+}
+
+.calendar-heatmap-container {
+  margin-top: 1rem;
+}
+
+.calendar-heatmap-scroll {
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+.calendar-heatmap {
+  display: flex;
+  gap: 4px;
+}
+
+.calendar-heatmap-week {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.calendar-day {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  background-color: var(--surface-300);
+  transition: transform var(--transition-fast) ease, opacity var(--transition-fast) ease;
+  opacity: 0.9;
+}
+
+.calendar-day:hover:not(.empty) {
+  transform: scale(1.2);
+  opacity: 1;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  z-index: 10;
+}
+
+.calendar-day.empty {
+  background-color: transparent;
+  pointer-events: none;
 }

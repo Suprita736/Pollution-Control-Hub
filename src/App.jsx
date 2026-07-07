@@ -9,6 +9,7 @@ import LocationMap from './components/LocationMap';
 import QuizSection from './components/QuizSection';
 import SolutionsAwareness from './components/SolutionsAwareness';
 import ScenarioSimulator from './components/ScenarioSimulator';
+import HistoricalAnalysis from './components/HistoricalAnalysis';
 import { CITY_COORDINATES } from './constants/cities';
 import {
   estimateWeeklyMonthlyAverages,
@@ -87,7 +88,8 @@ function SectionNav({ activeSection, onSectionChange, theme, onToggleTheme }) {
   const sections = [
     { id: 'home', label: 'Home' },
     { id: 'quiz', label: 'Quiz' },
-    { id: 'community', label: 'Community' }
+    { id: 'community', label: 'Community' },
+    { id: 'history', label: 'History' }
   ];
   const isDark = theme === 'dark';
 
@@ -384,6 +386,10 @@ export default function App() {
       ) : activeSection === 'community' ? (
         <div className="content-grid community-layout">
           <CommunityHub />
+        </div>
+      ) : activeSection === 'history' ? (
+        <div className="content-grid history-layout">
+          <HistoricalAnalysis position={position} />
         </div>
       ) : (
         <div className="content-grid quiz-layout">
