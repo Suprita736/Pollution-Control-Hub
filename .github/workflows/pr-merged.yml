@@ -2,23 +2,33 @@ name: PR Merged Automation
 
 on:
   pull_request:
-    types: [closed]
+    types:
+      - closed
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
-  welcome-merged-pr:
-    runs-on: ubuntu-latest
+  thank-contributor:
     if: github.event.pull_request.merged == true
-    permissions:
-      pull-requests: write
+    runs-on: ubuntu-latest
+
     steps:
-      - name: Comment on merged PR
+      - name: Thank contributor
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
+            await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `Thank you @${context.payload.pull_request.user.login} for your contribution!\n\nYour pull request has been successfully merged. We appreciate your effort in improving Pollution Control Hub. We look forward to your future contributions!`
-            })
+              issue_number: context.payload.pull_request.number,
+              body: `🎉 Thank you @${context.payload.pull_request.user.login} for your contribution!
+
+              Your pull request has been successfully **merged** into the project. 🚀
+
+              We truly appreciate the time and effort you invested in improving **Pollution Control Hub**.
+
+              We look forward to seeing more of your amazing contributions in the future! 💙`
+            });
