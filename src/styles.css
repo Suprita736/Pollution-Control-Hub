@@ -3374,3 +3374,43 @@ a {
   font-size: 0.9rem;
 }
 
+/* ============================================================
+   Skeletons
+   ============================================================ */
+.skeleton {
+  background-color: var(--line);
+  border-radius: var(--r-sm);
+  position: relative;
+  overflow: hidden;
+  border: none !important;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+:root[data-theme="dark"] .skeleton::after {
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+

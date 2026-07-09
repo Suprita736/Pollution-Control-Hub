@@ -13,6 +13,7 @@ import ScenarioSimulator from './components/ScenarioSimulator';
 import AqiMissionGame from './components/AqiMissionGame';
 import HistoricalAnalysis from './components/HistoricalAnalysis';
 import LocationSearch from './components/LocationSearch';
+import SkeletonDashboard from './components/SkeletonDashboard';
 import { CITY_COORDINATES } from './constants/cities';
 import {
   estimateWeeklyMonthlyAverages,
@@ -315,9 +316,14 @@ export default function App() {
 
   if (loading && !error) {
     return (
-      <main className="app-shell loading-state">
+      <main className="app-shell">
         <SectionNav activeSection={activeSection} onSectionChange={setActiveSection} theme={theme} onToggleTheme={toggleTheme} />
-        <h1 className="loading-title text-3xl">Preparing live pollution intelligence...</h1>
+        <Hero cityName={position.cityName} />
+        {activeSection === 'home' && (
+          <div className="content-grid" style={{ marginTop: 'var(--sp-4)' }}>
+            <SkeletonDashboard />
+          </div>
+        )}
       </main>
     );
   }
