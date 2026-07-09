@@ -9,12 +9,16 @@ import LocationMap from './components/LocationMap';
 import QuizSection from './components/QuizSection';
 import SolutionsAwareness from './components/SolutionsAwareness';
 import ScenarioSimulator from './components/ScenarioSimulator';
+import AqiMissionGame from './components/AqiMissionGame';
+import HistoricalAnalysis from './components/HistoricalAnalysis';
+import LocationSearch from './components/LocationSearch';
 import { CITY_COORDINATES } from './constants/cities';
 import {
   estimateWeeklyMonthlyAverages,
   fetchAirQualityByCoords,
   fetchCityComparisons,
-  estimateExposureTime
+  estimateExposureTime,
+  fetchWindData
 } from './services/airQualityService';
 
 const DEFAULT_POSITION = {
@@ -28,9 +32,9 @@ const AUTO_REFRESH_SECONDS = 180;
 
 function Hero({ cityName }) {
   return (
-    <header className="hero">
+    <header className="hero flex *:flex-col items-center justify-center text-center">
       <div className="hero-overlay" />
-      <div className="hero-content">
+      <div className="hero-content ">
         <p className="eyebrow">Pollution Control Hub</p>
         <h1>Monitor. Understand. Act.</h1>
         <p>
@@ -52,18 +56,20 @@ function AppControls({
 }) {
   return (
     <section className="app-controls" aria-label="Live controls">
-      <div className="control-group">
+      <div className="control-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'nowrap' }}>
         <label htmlFor="city-selector">Track city:</label>
-        <select
-          id="city-selector"
-          value={selectedCity}
-          onChange={(event) => onCityChange(event.target.value)}
+        <LocationSearch 
+          initialCityName={selectedCity === 'auto' ? 'auto' : selectedCity} 
+          onLocationSelected={onCityChange} 
+        />
+        <button 
+          type="button" 
+          className="btn-secondary text-sm" 
+          style={{ padding: '0.4rem 0.8rem', whiteSpace: 'nowrap', flexShrink: 0 }}
+          onClick={() => onCityChange('auto')}
         >
-          <option value="auto">Auto detect location</option>
-          {CITY_COORDINATES.map((city) => (
-            <option key={city.name} value={city.name}>{city.name}</option>
-          ))}
-        </select>
+          Auto Detect
+        </button>
       </div>
 
       <div className="control-group status">
@@ -86,12 +92,18 @@ function AppControls({
 function SectionNav({ activeSection, onSectionChange, theme, onToggleTheme }) {
   const sections = [
     { id: 'home', label: 'Home' },
-    { id: 'quiz', label: 'Quiz' }
+    { id: 'quiz', label: 'Quiz' },
+    { id: 'game', label: 'Game' },
+    { id: 'community', label: 'Community' },
+    { id: 'history', label: 'History' }
   ];
   const isDark = theme === 'dark';
 
   return (
-    <nav className="section-nav" aria-label="Main sections">
+    <nav 
+      className="section-nav" 
+      aria-label="Main sections"
+    >
       <div className="nav-sections">
         {sections.map((section) => (
           <button
@@ -103,44 +115,47 @@ function SectionNav({ activeSection, onSectionChange, theme, onToggleTheme }) {
             {section.label}
           </button>
         ))}
+
+        <div className="nav-divider"></div>
+
+        <button
+          type="button"
+          className={`theme-toggle-inline ${theme === "dark" ? "dark" : ""}`}
+          onClick={onToggleTheme}
+          aria-label="Toggle Theme"
+        >
+          <span className="toggle-thumb">
+            {theme === "dark" ? (
+              <svg
+                viewBox="0 0 24 24"
+                className="moon-icon"
+              >
+                <path
+                  d="M20 15.5A8.5 8.5 0 1 1 12.5 4a7 7 0 0 0 7.5 11.5z"
+                  fill="currentColor"
+                />
+              </svg>
+            ) : (
+              <svg
+                viewBox="0 0 24 24"
+                className="sun-icon"
+              >
+                <circle cx="12" cy="12" r="5" fill="currentColor" />
+                <g stroke="currentColor" strokeWidth="2">
+                  <line x1="12" y1="1" x2="12" y2="4" />
+                  <line x1="12" y1="20" x2="12" y2="23" />
+                  <line x1="1" y1="12" x2="4" y2="12" />
+                  <line x1="20" y1="12" x2="23" y2="12" />
+                  <line x1="4" y1="4" x2="6" y2="6" />
+                  <line x1="18" y1="18" x2="20" y2="20" />
+                  <line x1="18" y1="6" x2="20" y2="4" />
+                  <line x1="4" y1="20" x2="6" y2="18" />
+                </g>
+              </svg>
+            )}
+          </span>
+        </button>
       </div>
-      <button
-        type="button"
-        className={`theme-toggle-inline ${theme === "dark" ? "dark" : ""}`}
-        onClick={onToggleTheme}
-        aria-label="Toggle Theme"
-      >
-        <span className="toggle-thumb">
-          {theme === "dark" ? (
-            <svg
-              viewBox="0 0 24 24"
-              className="moon-icon"
-            >
-              <path
-                d="M20 15.5A8.5 8.5 0 1 1 12.5 4a7 7 0 0 0 7.5 11.5z"
-                fill="currentColor"
-              />
-            </svg>
-          ) : (
-            <svg
-              viewBox="0 0 24 24"
-              className="sun-icon"
-            >
-              <circle cx="12" cy="12" r="5" fill="currentColor" />
-              <g stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="1" x2="12" y2="4" />
-                <line x1="12" y1="20" x2="12" y2="23" />
-                <line x1="1" y1="12" x2="4" y2="12" />
-                <line x1="20" y1="12" x2="23" y2="12" />
-                <line x1="4" y1="4" x2="6" y2="6" />
-                <line x1="18" y1="18" x2="20" y2="20" />
-                <line x1="18" y1="6" x2="20" y2="4" />
-                <line x1="4" y1="20" x2="6" y2="18" />
-              </g>
-            </svg>
-          )}
-        </span>
-      </button>
     </nav>
   );
 }
@@ -153,6 +168,7 @@ export default function App() {
   const [trend, setTrend] = useState([]);
   const [nearbyPoints, setNearbyPoints] = useState([]);
   const [cityComparisons, setCityComparisons] = useState([]);
+  const [windData, setWindData] = useState(null);
   const [confidenceScore, setConfidenceScore] = useState('High');
   const [dataCompleteness, setDataCompleteness] = useState(100);
   const [loading, setLoading] = useState(true);
@@ -182,45 +198,48 @@ export default function App() {
   }, [theme]);
 
   useEffect(() => {
-    if (selectedCity !== 'auto') {
-      setLocationNotice('');
-      const city = CITY_COORDINATES.find((item) => item.name === selectedCity);
-      if (city) {
-        setPosition({
-          lat: city.lat,
-          lon: city.lon,
-          cityName: city.name
-        });
-      }
-      return;
-    }
-
-    if (!navigator.geolocation) {
-      setLocationNotice(
-        "Your browser can't detect location, so we're showing Delhi. Pick a city from the dropdown if that's not right."
-      );
-      setPosition(DEFAULT_POSITION);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (coords) => {
-        setLocationNotice('');
-        setPosition({
-          lat: Number(coords.coords.latitude.toFixed(4)),
-          lon: Number(coords.coords.longitude.toFixed(4)),
-          cityName: 'Your Current Location'
-        });
-      },
-      () => {
+    if (selectedCity === 'auto') {
+      if (!navigator.geolocation) {
         setLocationNotice(
-          "Couldn't detect your location — showing Delhi for now. Pick a city manually from the dropdown if you need different data."
+          "Your browser can't detect location, so we're showing Delhi."
         );
         setPosition(DEFAULT_POSITION);
-      },
-      { timeout: 8000 }
-    );
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (coords) => {
+          setLocationNotice('');
+          setPosition({
+            lat: Number(coords.coords.latitude.toFixed(4)),
+            lon: Number(coords.coords.longitude.toFixed(4)),
+            cityName: 'Your Current Location'
+          });
+        },
+        () => {
+          setLocationNotice(
+            "Couldn't detect your location — showing Delhi for now."
+          );
+          setPosition(DEFAULT_POSITION);
+        },
+        { timeout: 8000 }
+      );
+    }
   }, [selectedCity]);
+
+  const handleLocationSelected = (location) => {
+    if (location === 'auto') {
+      setSelectedCity('auto');
+    } else {
+      setSelectedCity(location.name);
+      setPosition({
+        lat: location.lat,
+        lon: location.lon,
+        cityName: location.name
+      });
+      setLocationNotice('');
+    }
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -238,9 +257,10 @@ export default function App() {
         if (!silent) setLoading(true);
         if (silent) setIsRefreshing(true);
 
-        const [aqi, cities] = await Promise.all([
+        const [aqi, cities, wind] = await Promise.all([
           fetchAirQualityByCoords(position.lat, position.lon, signal),
-          fetchCityComparisons(signal)
+          fetchCityComparisons(signal),
+          fetchWindData(position.lat, position.lon, signal)
         ]);
 
         setCurrent(aqi.current);
@@ -249,6 +269,7 @@ export default function App() {
         setConfidenceScore(aqi.confidenceScore);
         setDataCompleteness(aqi.dataCompleteness);
         setCityComparisons(cities);
+        setWindData(wind);
         setLastUpdated(new Date().toISOString());
         setRefreshCountdown(AUTO_REFRESH_SECONDS);
         setError('');
@@ -308,9 +329,10 @@ export default function App() {
 
     try {
       setIsRefreshing(true);
-      const [aqi, cities] = await Promise.all([
+      const [aqi, cities, wind] = await Promise.all([
         fetchAirQualityByCoords(position.lat, position.lon, signal),
-        fetchCityComparisons(signal)
+        fetchCityComparisons(signal),
+        fetchWindData(position.lat, position.lon, signal)
       ]);
       setCurrent(aqi.current);
       setTrend(aqi.trend);
@@ -318,6 +340,7 @@ export default function App() {
       setConfidenceScore(aqi.confidenceScore);
       setDataCompleteness(aqi.dataCompleteness);
       setCityComparisons(cities);
+      setWindData(wind);
       setLastUpdated(new Date().toISOString());
       setRefreshCountdown(AUTO_REFRESH_SECONDS);
       setError('');
@@ -345,20 +368,22 @@ export default function App() {
     return (
       <main className="app-shell loading-state">
         <SectionNav activeSection={activeSection} onSectionChange={setActiveSection} theme={theme} onToggleTheme={toggleTheme} />
-        <h1>Preparing live pollution intelligence...</h1>
+        <h1 className="loading-title text-3xl">Preparing live pollution intelligence...</h1>
       </main>
     );
   }
 
   return (
     <main className="app-shell">
-      <Hero cityName={position.cityName} />
+      {/* 1. Structural fix: Renders the navigation element at the very top */}
       <SectionNav activeSection={activeSection} onSectionChange={setActiveSection} theme={theme} onToggleTheme={toggleTheme} />
+      
+      <Hero cityName={position.cityName} />
 
       {activeSection === 'home' && (
         <AppControls
           selectedCity={selectedCity}
-          onCityChange={setSelectedCity}
+          onCityChange={handleLocationSelected}
           onRefresh={refreshNow}
           isRefreshing={isRefreshing}
           refreshCountdown={refreshCountdown}
@@ -375,63 +400,77 @@ export default function App() {
         </div>
       )}
 
-      {activeSection === 'home' ? (
-  <>
-    {error && (
-      <p className="error-banner">{error}</p>
-    )}
+          {error && <p className="error-banner">{error}</p>}
 
-    {current && (
-      <div className="content-grid">
-        <Dashboard
-          cityName={position.cityName}
-          current={current}
-          trend={trend}
-          cityComparisons={cityComparisons}
-          timeRange={timeRange}
-          onTimeRangeChange={setTimeRange}
-          lastUpdated={lastUpdated}
-          isRefreshing={isRefreshing}
-          confidenceScore={confidenceScore}
-          dataCompleteness={dataCompleteness}
-        />
+      {activeSection === 'home' && current && (
+        <div className="content-grid">
+          <Dashboard
+            cityName={position.cityName}
+            current={current}
+            trend={trend}
+            cityComparisons={cityComparisons}
+            timeRange={timeRange}
+            onTimeRangeChange={setTimeRange}
+            lastUpdated={lastUpdated}
+            isRefreshing={isRefreshing}
+            confidenceScore={confidenceScore}
+            dataCompleteness={dataCompleteness}
+          />
 
-        <LocationMap
-          center={position}
-          nearbyPoints={nearbyPoints}
-          confidenceScore={confidenceScore}
-        />
+          <LocationMap
+            center={position}
+            nearbyPoints={nearbyPoints}
+            confidenceScore={confidenceScore}
+            windData={windData}
+          />
 
-        <AlertsPanel
-          cityName={position.cityName}
-          current={current}
-          confidenceScore={confidenceScore}
-          exposureEstimate={exposureEstimate}
-        />
+          <AlertsPanel
+            cityName={position.cityName}
+            current={current}
+            confidenceScore={confidenceScore}
+            dataCompleteness={dataCompleteness}
+            exposureEstimate={exposureEstimate}
+          />
 
-        <HealthAdvisory />
+          <HealthAdvisory />
 
-        <SolutionsAwareness />
+          <SolutionsAwareness />
 
-        <AnalyticsInsights
-          analytics={analytics}
-          trend={trend}
-          timeRange={timeRange}
-        />
+          <AnalyticsInsights
+            analytics={analytics}
+            trend={trend}
+            timeRange={timeRange}
+          />
 
-        <ScenarioSimulator current={current} />
+          <ScenarioSimulator current={current} />
+        </div>
+      )}
 
-        <CommunityHub />
-      </div>
-    )}
-  </>
-) : (
-  <div className="content-grid quiz-layout">
-    <QuizSection />
-  </div>
-)}
+      {activeSection === 'community' && (
+        <div className="content-grid community-layout">
+          <CommunityHub />
+        </div>
+      )}
 
-<Footer />
+      {activeSection === 'history' && (
+        <div className="content-grid history-layout">
+          <HistoricalAnalysis position={position} />
+        </div>
+      )}
+
+      {activeSection === 'quiz' && (
+        <div className="content-grid quiz-layout">
+          <QuizSection />
+        </div>
+      )}
+
+      {activeSection === 'game' && (
+        <div className="content-grid game-layout">
+          <AqiMissionGame current={current} />
+        </div>
+      )}
+
+      <Footer />
     </main>
   );
 }
