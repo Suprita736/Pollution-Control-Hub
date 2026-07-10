@@ -319,6 +319,12 @@ export default function App() {
     return (
       <main className="app-shell">
         <SectionNav activeSection={activeSection} onSectionChange={setActiveSection} theme={theme} onToggleTheme={toggleTheme} />
+
+        <div className="loading-spinner" aria-hidden="true"></div>
+        <h1 className="loading-title text-3xl">
+          Preparing live pollution intelligence...
+        </h1>
+
         <Hero cityName={position.cityName} />
         {activeSection === 'home' && (
           <div className="content-grid" style={{ marginTop: 'var(--sp-4)' }}>
