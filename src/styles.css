@@ -3439,4 +3439,28 @@ a {
   font-style: italic;
   font-size: 0.9rem;
 }
+.export-report-button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 12px;
+  background: #0d9488;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.export-report-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(13, 148, 136, 0.25);
+}
+
+.export-report-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
 
