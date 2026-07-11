@@ -61,7 +61,18 @@ export default function Dashboard({
   dataCompleteness
 }) {
   if (!current) {
-    return null;
+    return (
+      <section className="panel dashboard">
+        <div className="panel-head">
+          <h2>Real-Time Pollution Dashboard</h2>
+          <p>Live readings for {cityName}</p>
+        </div>
+        <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--muted)' }}>
+          <h3>No data available</h3>
+          <p>We couldn't find pollution data for {cityName}.</p>
+        </div>
+      </section>
+    );
   }
   const aqiBand = getAQIBand(current.us_aqi);
   const chartData = trend.slice(-timeRange).map((item) => ({
