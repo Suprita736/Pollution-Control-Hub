@@ -1,5 +1,11 @@
 import { CITY_COORDINATES } from '../constants/cities';
 import { cacheStore } from '../utils/cacheStore';
+import { LRUCache } from 'lru-cache';
+
+export const airQualityCache = new LRUCache({
+  max: 500,
+  ttl: 1000 * 60 * 5, 
+});
 
 const BASE_URL = 'https://air-quality-api.open-meteo.com/v1/air-quality';
 
@@ -122,6 +128,14 @@ export async function fetchAirQualityByCoords(lat, lon, signal, skipGrid = false
     throw new Error("You're offline. Please reconnect to view air quality data." );}
   if (!isValidCoord(lat, lon)) throw new Error('Invalid coordinates provided.');
 
+  const gridLat = Number(lat).toFixed(2);
+  const gridLon = Number(lon).toFixed(2);
+  const cacheKey = `aqi-${gridLat}-${gridLon}`;
+
+  if (airQualityCache.has(cacheKey)) {
+    return airQualityCache.get(cacheKey);
+  }
+
   const today = new Date();
   const yesterday = new Date(today);
 
@@ -167,13 +181,16 @@ export async function fetchAirQualityByCoords(lat, lon, signal, skipGrid = false
   const nearbyPoints = skipGrid ? [] : await fetchLocalGrid(lat, lon, 6, signal);
   const { confidenceScore, dataCompleteness } = computeConfidence(hourly, times);
 
-  return {
+  const result = {
     current,
     trend,
     nearbyPoints,
     confidenceScore,
     dataCompleteness
   };
+
+  airQualityCache.set(cacheKey, result);
+  return result;
 }
 
 export async function fetchWindData(lat, lon, signal) {
