@@ -1,4 +1,5 @@
 import { CITY_COORDINATES } from '../constants/cities';
+import { aqiCache } from '../lib/cache';
 import { cacheStore } from '../utils/cacheStore';
 import { LRUCache } from 'lru-cache';
 import ApiWorker from '../workers/apiWorker?worker';
@@ -49,8 +50,7 @@ const DIRECTION_LABELS = {
   '1,-1': 'South-East zone'
 };
 
-const gridCache = new Map();
-const CACHE_TTL_MS = 5 * 60 * 1000;
+
 
 function isValidCoord(lat, lon) {
   return (
@@ -72,9 +72,9 @@ async function fetchGridPointAqi(lat, lon, signal) {
 }
 
 export async function fetchLocalGrid(lat, lon, topN = 6, signal) {
-  const cacheKey = `${lat.toFixed(1)},${lon.toFixed(1)}`;
-  const cached = gridCache.get(cacheKey);
-  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) return cached.points;
+  const cacheKey = `grid-${lat.toFixed(1)},${lon.toFixed(1)}`;
+  const cached = aqiCache.get(cacheKey);
+  if (cached) return cached;
 
   const gridOffsets = [-1, 0, 1].flatMap((dy) =>
     [-1, 0, 1]
@@ -102,7 +102,7 @@ export async function fetchLocalGrid(lat, lon, topN = 6, signal) {
     .sort((a, b) => b.aqi - a.aqi)
     .slice(0, topN);
 
-  gridCache.set(cacheKey, { ts: Date.now(), points });
+  aqiCache.set(cacheKey, points);
   return points;
 }
 
