@@ -392,32 +392,28 @@ export default function App() {
     };
   }, []);
 
-  if (loading && !error) {
-    return (
-      <main className="app-shell">
-        <SectionNav activeSection={activeSection} onSectionChange={setActiveSection} theme={theme} onToggleTheme={toggleTheme} />
-
-        <div className="loading-spinner" aria-hidden="true"></div>
-        <h1 className="loading-title text-3xl">
-          Preparing live pollution intelligence...
-        </h1>
-
-        <Hero cityName={position.cityName} />
-        {activeSection === 'home' && (
-          <div className="content-grid" style={{ marginTop: 'var(--sp-4)' }}>
-            <SkeletonDashboard />
-          </div>
-        )}
-      </main>
-    );
-  }
-
   return (
     <main className="app-shell">
       {/* 1. Structural fix: Renders the navigation element at the very top */}
       <SectionNav activeSection={activeSection} onSectionChange={setActiveSection} theme={theme} onToggleTheme={toggleTheme} />
 
-      <Hero cityName={position.cityName} />
+      {loading && !error ? (
+        <>
+          <div className="loading-spinner" aria-hidden="true"></div>
+          <h1 className="loading-title text-3xl">
+            Preparing live pollution intelligence...
+          </h1>
+
+          <Hero cityName={position.cityName} />
+          {activeSection === 'home' && (
+            <div key="skeleton-grid" className="content-grid" style={{ marginTop: 'var(--sp-4)' }}>
+              <SkeletonDashboard />
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <Hero cityName={position.cityName} />
 
       {activeSection === 'home' && (
         <AppControls
@@ -442,7 +438,7 @@ export default function App() {
       {error && <p className="error-banner">{error}</p>}
 
       {activeSection === 'home' && current && (
-        <div className="content-grid">
+        <div key="dashboard-grid" className="content-grid">
           <Dashboard
             cityName={position.cityName}
             current={current}
@@ -511,6 +507,8 @@ export default function App() {
       )}
 
       <Footer />
+        </>
+      )}
     </main>
   );
 }
