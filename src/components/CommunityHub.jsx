@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { logger } from '../utils/logger';
 
 const STORAGE_KEY = "pollution-community-reports";
 const VOTES_STORAGE_KEY = "pollution-community-voted-ids";
@@ -60,8 +59,6 @@ export default function CommunityHub() {
   });
   const [fileInputKey, setFileInputKey] = useState(Date.now());
   const [uploadError, setUploadError] = useState('');
-  const [selectedFileName, setSelectedFileName] = useState("No file chosen");
-  const [previewImage, setPreviewImage] = useState("");
 
   useEffect(() => {
     try {
@@ -69,15 +66,16 @@ export default function CommunityHub() {
       const estimatedSize = new Blob([serialized]).size;
 
       if (estimatedSize > STORAGE_WARN_THRESHOLD) {
-        logger.warn('localStorage usage high', {
-          usageMB: (estimatedSize / 1024 / 1024).toFixed(1)
-        });
+        console.warn(
+          `Community reports using ${(estimatedSize / 1024 / 1024).toFixed(1)} MB of localStorage`
+        );
       }
 
       localStorage.setItem(STORAGE_KEY, serialized);
     } catch (e) {
       if (e.name === 'QuotaExceededError' || e.code === 22) {
-        logger.error('localStorage quota exceeded, pruning oldest reports');
+        console.error('localStorage quota exceeded. Pruning oldest reports...');
+        // Remove oldest/lowest-vote reports until write succeeds
         const sorted = [...reports].sort((a, b) => {
           if (a.votes !== b.votes) return a.votes - b.votes;
           return new Date(a.createdAt) - new Date(b.createdAt);
@@ -90,12 +88,12 @@ export default function CommunityHub() {
             setReports(pruned);
             break;
           } catch {
-            pruned.shift();
+            pruned.shift(); // remove lowest-value report
           }
         }
 
         if (pruned.length === 0) {
-          logger.error('All community reports pruned, localStorage quota still exceeded');
+          console.error('All community reports pruned — localStorage quota still exceeded.');
         }
       } else {
         throw e;
@@ -107,7 +105,7 @@ export default function CommunityHub() {
     try {
       localStorage.setItem(VOTES_STORAGE_KEY, JSON.stringify([...votedIds]));
     } catch (e) {
-      logger.error('Failed to persist votes to localStorage', { error: e?.message });
+      console.error('Failed to persist community votes to localStorage:', e);
     }
   }, [votedIds]);
 
@@ -128,22 +126,14 @@ export default function CommunityHub() {
     };
 
     setReports((prev) => [newReport, ...prev]);
-    setForm({
-      title: "",
-      description: "",
-      image: "",
-    });
-
-    setSelectedFileName("No file chosen");
-    setPreviewImage("");
+    setForm({ title: "", description: "", image: "" });
     setFileInputKey(Date.now());
   };
 
   const uploadImage = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    setSelectedFileName(file.name);
-    setPreviewImage(URL.createObjectURL(file));
+
     setUploadError('');
 
     if (file.size > MAX_IMAGE_SIZE_BYTES) {
@@ -151,7 +141,6 @@ export default function CommunityHub() {
         `Image too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is 500 KB.`
       );
       event.target.value = '';
-      setSelectedFileName("No file chosen");
       setFileInputKey(Date.now());
       return;
     }
@@ -227,7 +216,7 @@ export default function CommunityHub() {
   });
 
   return (
-    <section className="panel">
+    <section data-testid="community-hub" className="panel">
       <div className="panel-head">
         <h2>Community Contribution</h2>
         <p>Report local pollution issues with evidence and crowd voting</p>
@@ -249,58 +238,46 @@ export default function CommunityHub() {
             setForm((prev) => ({ ...prev, description: event.target.value }))
           }
         />
-        <div className="file-upload-container">
-          <label
-            htmlFor="community-file-upload"
-            className="file-upload-button"
-          >
-            📤 Choose File
-          </label>
-
-          <input
-            id="community-file-upload"
-            key={fileInputKey}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={uploadImage}
-            className="file-input-hidden"
-          />
-
-          <div className="selected-file-container">
-            {previewImage && (
-              <img
-                src={previewImage}
-                alt="Selected evidence"
-                className="image-preview"
-              />
-            )}
-
-            <span className="selected-file-name">
-              {selectedFileName}
-            </span>
-          </div>
-        </div>
-
-        {uploadError && (
-          <p className="upload-error">
-            {uploadError}
-          </p>
-        )}
+        <input key={fileInputKey} type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadImage} />
+        {uploadError && <p className="upload-error">{uploadError}</p>}
         <button type="submit">Submit Report</button>
       </form>
 
-      <div className="filter-tabs">
-        {["All", "Pending", "Verified", "Addressed"].map((statusOption) => (
-          <button
-            key={statusOption}
-            type="button"
-            onClick={() => setFilter(statusOption)}
-            className={filter === statusOption ? "active" : ""}
-          >
-            {statusOption}
-          </button>
-        ))}
-      </div>
+   <div
+  className="filter-tabs"
+  style={{
+    display: "flex",
+    gap: "12px",
+    margin: "20px 0",
+    flexWrap: "wrap",
+  }}
+>
+  {["All", "Pending", "Verified", "Addressed"].map((statusOption) => (
+    <button
+      key={statusOption}
+      type="button"
+      onClick={() => setFilter(statusOption)}
+      style={{
+        padding: "8px 15px",
+        borderRadius: "10px",
+        border: filter === statusOption ? "2px solid #0077b6" : "2px solid #dcdcdc",
+        backgroundColor:
+          filter === statusOption ? "#0077b6" : "#ffffff",
+        color: filter === statusOption ? "#ffffff" : "#333333",
+        cursor: "pointer",
+        fontWeight: filter === statusOption ? "600" : "500",
+        fontSize: "15px",
+        transition: "all 0.3s ease",
+        boxShadow:
+          filter === statusOption
+            ? "0 4px 12px rgba(0,119,182,0.3)"
+            : "0 2px 6px rgba(0,0,0,0.08)",
+      }}
+    >
+      {statusOption}
+    </button>
+  ))}
+</div>
 
       <div className="report-feed">
         {reports.length === 0 ? (
@@ -357,7 +334,7 @@ export default function CommunityHub() {
                 <span
                   className={
                     report.status.startsWith("Verified") ||
-                      report.status === "Addressed"
+                    report.status === "Addressed"
                       ? "active"
                       : "inactive"
                   }

@@ -22,24 +22,24 @@ function CustomTooltip({ active, payload }) {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="custom-tooltip" style={{
-        backgroundColor: 'var(--card)',
-        padding: '1rem',
-        border: '1px solid var(--line)',
-        borderRadius: '0.5rem',
-        boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+      <div className="custom-tooltip" style={{ 
+        backgroundColor: 'var(--bg-card, #ffffff)', 
+        padding: '1rem', 
+        border: '1px solid var(--border-color, #e2e8f0)', 
+        borderRadius: '0.5rem', 
+        boxShadow: '0 10px 25px rgba(0,0,0,0.2)', 
         maxWidth: '250px',
         zIndex: 1000,
         position: 'relative'
       }}>
         <h4 style={{ margin: '0 0 0.5rem 0', color: data.color, fontSize: '1.25rem', fontWeight: 'bold' }}>{data.name}</h4>
-        <p style={{ margin: '0 0 0.25rem 0', color: 'var(--ink)' }}>
+        <p style={{ margin: '0 0 0.25rem 0', color: 'var(--text-primary, #0f172a)' }}>
           <strong>Current:</strong> {data.value} µg/m³
         </p>
-        <p style={{ margin: '0 0 0.75rem 0', color: 'var(--ink)' }}>
+        <p style={{ margin: '0 0 0.75rem 0', color: 'var(--text-primary, #0f172a)' }}>
           <strong>WHO Limit:</strong> {data.limit} µg/m³
         </p>
-        <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--muted)', lineHeight: '1.4' }}>
+        <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary, #475569)', lineHeight: '1.4' }}>
           {data.impact}
         </p>
       </div>
@@ -60,9 +60,6 @@ export default function Dashboard({
   confidenceScore,
   dataCompleteness
 }) {
-  if (!current) {
-    return null;
-  }
   const aqiBand = getAQIBand(current.us_aqi);
   const chartData = trend.slice(-timeRange).map((item) => ({
     ...item,
@@ -75,15 +72,15 @@ export default function Dashboard({
     { name: 'NO2', value: current.nitrogen_dioxide, limit: 25, impact: 'May irritate airways and aggravate respiratory diseases.', color: getPollutantColor(current.nitrogen_dioxide, 25) },
     { name: 'O3', value: current.ozone, limit: 100, impact: 'Can trigger asthma and reduce lung function.', color: getPollutantColor(current.ozone, 100) },
     { name: 'CO', value: current.carbon_monoxide, limit: 4000, impact: 'High levels reduce oxygen delivery to the body.', color: getPollutantColor(current.carbon_monoxide, 4000) }
-  ].map(p => ({ ...p, ratio: Math.max(10, (p.value / p.limit) * 100) })); // Minimum ratio of 10 for visibility
+  ].map(p => ({ ...p, ratio: Math.max(10, (p.value / p.limit) * 100) }));
 
   return (
-    <section className="panel dashboard">
+    <section data-testid="dashboard" className="panel dashboard">
       <div className="panel-head">
         <h2>Real-Time Pollution Dashboard</h2>
         <p>Live readings for {cityName}</p>
         <div className="dashboard-tools">
-          <div className="range-switch">
+          <div data-testid="time-range-selector" className="range-switch">
             {[6, 12, 24].map((range) => (
               <button
                 key={range}
@@ -104,8 +101,10 @@ export default function Dashboard({
       <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
         <article className="kpi-card aqi" style={{ gridColumn: 'span 1' }}>
           <h3>US AQI</h3>
-          <div className="kpi-value" style={{ color: aqiBand.color }}>{current.us_aqi}</div>
-          <p>{aqiBand.label}</p>
+          <div data-testid="aqi-value" className="kpi-value" style={{ color: aqiBand.color }}>
+            {current.us_aqi}
+          </div>
+          <p data-testid="aqi-band-label">{aqiBand.label}</p>
           <span className={`confidence-badge confidence-${confidenceScore?.toLowerCase()}`}>
             {confidenceScore} ({dataCompleteness}% data)
           </span>
@@ -142,31 +141,53 @@ export default function Dashboard({
         </article>
       </div>
 
+      <div data-testid="pollutants-grid" className="pollutants-grid">
+        {pollutants.map((p) => (
+          <article
+            key={p.name}
+            data-testid={`pollutant-${p.name.toLowerCase().replace('.', '_')}`}
+            className="pollutant-card"
+            style={{ borderLeft: `4px solid ${p.color}` }}
+          >
+            <h4>{p.name}</h4>
+            <span className="pollutant-value">{p.value}</span>
+            <span className="pollutant-unit">µg/m³</span>
+          </article>
+        ))}
+      </div>
+
       <div className="chart-grid">
         <article className="chart-card">
           <h3>AQI Trend ({timeRange}h)</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
-              <XAxis dataKey="label" minTickGap={28} tick={{ fill: 'var(--muted)' }} />
-              <YAxis tick={{ fill: 'var(--muted)' }} />
-              <Tooltip />
-              <Line type="monotone" dataKey="us_aqi" stroke="#0d9488" strokeWidth={3} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
+          <div data-testid="aqi-trend-chart">
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#d7e6e1" />
+                <XAxis dataKey="label" minTickGap={28} />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="us_aqi" stroke="#0d9488" strokeWidth={3} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </article>
 
-        <article className="chart-card">
+        <article data-testid="city-comparisons" className="chart-card">
           <h3>City-Wise AQI Comparison</h3>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={cityComparisons} layout="vertical" margin={{ left: 30 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
-              <XAxis type="number" tick={{ fill: 'var(--muted)' }} />
-              <YAxis type="category" dataKey="city" width={90} tick={{ fill: 'var(--muted)' }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#d7e6e1" />
+              <XAxis type="number" />
+              <YAxis type="category" dataKey="city" width={90} />
               <Tooltip />
               <Bar dataKey="aqi" fill="#f97316" radius={[0, 12, 12, 0]} />
             </BarChart>
           </ResponsiveContainer>
+          <ul style={{ display: 'none' }}>
+            {cityComparisons && cityComparisons.map((c, i) => (
+              <li key={i} data-testid="city-comparison-item">{c.city}: {c.aqi}</li>
+            ))}
+          </ul>
         </article>
       </div>
     </section>
