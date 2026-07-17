@@ -1,69 +1,88 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { cacheStore } from '../utils/cacheStore';
 
 export function useSWR(key, fetcher, { ttl = 5 * 60 * 1000 } = {}) {
-  // Initial state based on synchronous cache read
-  const getInitialData = () => (key ? cacheStore.get(key)?.data : undefined);
+  // Note: cacheStore.get is async, so this will initially be undefined/Promise.
+  // The useEffect below will correctly load the data from the cache on mount.
+  const getInitialData = () => undefined; 
   
   const [data, setData] = useState(getInitialData);
   const [error, setError] = useState(null);
-  const [isValidating, setIsValidating] = useState(() => !getInitialData() && !!key);
+  const [isValidating, setIsValidating] = useState(() => !!key);
   const [currentKey, setCurrentKey] = useState(key);
 
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
-
+  
   // Handle key changes synchronously to avoid flash of old data
   const isKeyChanged = key !== currentKey;
-  
   // Derive the display values immediately so we don't show old data
   // while React is processing the state update
   const displayData = isKeyChanged ? getInitialData() : data;
   const displayError = isKeyChanged ? null : error;
-  const displayIsValidating = isKeyChanged ? (!getInitialData() && !!key) : isValidating;
+  const displayIsValidating = isKeyChanged ? (!!key) : isValidating;
 
   if (isKeyChanged) {
     setCurrentKey(key);
     setData(getInitialData());
     setError(null);
-    setIsValidating(!getInitialData() && !!key);
+    setIsValidating(!!key);
   }
+
+  // We use a ref to track whether the component is currently mounted
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false; // Set to false when tab switches (unmounts)
+    };
+  }, []);
 
   const revalidate = useCallback(async (force = false) => {
     if (!key) return;
 
-    const isStale = cacheStore.isStale(key, ttl);
+    // FIX 1: Added 'await' so it checks the actual boolean result instead of a Promise object
+    const isStale = await cacheStore.isStale(key, ttl);
+    
     if (!force && !isStale) {
-      const cached = cacheStore.get(key);
-      if (cached && cached.data !== data) {
+      const cached = await cacheStore.get(key);
+      if (cached && isMountedRef.current) {
         setData(cached.data);
+        setIsValidating(false);
       }
       return;
     }
 
-    setIsValidating(true);
+    if (isMountedRef.current) setIsValidating(true);
+    
     try {
       const newData = await cacheStore.deduplicate(key, () => fetcherRef.current());
-      setData(newData);
-      setError(null);
+      
+      // FIX 2: Only update state if the user hasn't already switched tabs away
+      if (isMountedRef.current) {
+        setData(newData);
+        setError(null);
+      }
     } catch (err) {
-      if (err.name !== 'AbortError') {
+      if (err.name !== 'AbortError' && isMountedRef.current) {
         setError(err);
       }
     } finally {
-      setIsValidating(false);
+      if (isMountedRef.current) {
+        setIsValidating(false);
+      }
     }
-  }, [key, ttl, displayData]);
+  }, [key, ttl]);
 
   // Revalidate on mount or key change
   useEffect(() => {
     revalidate();
   }, [revalidate]);
 
-  // Force revalidation (e.g. for refresh button)
+  // Force revalidation
   const mutate = useCallback(async () => {
     if (!key) return;
-    cacheStore.invalidate(key);
+    await cacheStore.invalidate(key);
     await revalidate(true);
   }, [key, revalidate]);
 
