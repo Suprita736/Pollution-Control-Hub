@@ -173,7 +173,6 @@ export default function Dashboard({
             )}
           </p>
         </div>
-        </div>
         <button
           type="button"
           className="export-report-button"
