@@ -61,7 +61,8 @@ export default function Dashboard({
   lastUpdated,
   isRefreshing,
   confidenceScore,
-  dataCompleteness
+  dataCompleteness,
+  isFallback
 }) {
   const reportRef = useRef(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -111,7 +112,7 @@ export default function Dashboard({
         </div>
         <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--muted)' }}>
           <h3>No data available</h3>
-          <p>We couldn't find pollution data for {cityName}.</p>
+          <p>We couldn't retrieve live air quality data for {cityName} and no cached readings are available.</p>
         </div>
       </section>
     );
@@ -148,12 +149,66 @@ export default function Dashboard({
 
   const aqiTrend = getAqiTrendIndicator();
 
+<<<<<<< HEAD
   return (
     <section data-testid="dashboard" className="panel dashboard" ref={reportRef}>
       <div className="panel-head">
         <div>
           <h2>Real-Time Pollution Dashboard</h2>
           <p>Live readings for {cityName}</p>
+=======
+return (
+  <section className="panel dashboard" ref={reportRef}>
+    <div className="panel-head">
+      <div>
+        <h2>Real-Time Pollution Dashboard</h2>
+        <p>
+          Live readings for {cityName}
+          {isFallback && (
+            <span className="fallback-badge" style={{
+              marginLeft: '0.75rem',
+              padding: '0.2rem 0.5rem',
+              backgroundColor: '#d97706',
+              color: '#fff',
+              borderRadius: '4px',
+              fontSize: '0.75rem',
+              fontWeight: 'bold',
+              display: 'inline-block',
+              verticalAlign: 'middle'
+            }}>
+              Showing Cached Reading
+            </span>
+          )}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        className="export-report-button"
+        onClick={exportReportAsPDF}
+        disabled={isExporting}
+        data-html2canvas-ignore="true"
+        aria-label={isExporting ? 'Generating PDF, please wait' : 'Export dashboard report as PDF'}
+      >
+        {isExporting ? "Generating PDF..." : "Export Report as PDF"}
+      </button>
+
+      <div className="dashboard-tools">
+        {/* role="group" + aria-label makes this a named group for keyboard and screen reader users */}
+        <div className="range-switch" role="group" aria-label="Select time range">
+          {[6, 12, 24].map((range) => (
+            <button
+              key={range}
+              type="button"
+              className={timeRange === range ? "active" : ""}
+              onClick={() => onTimeRangeChange(range)}
+              aria-label={`Show last ${range} hours`}
+              aria-pressed={timeRange === range}
+            >
+              {range}h
+            </button>
+          ))}
+>>>>>>> upstream/main
         </div>
         <button
           type="button"
