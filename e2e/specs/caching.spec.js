@@ -72,7 +72,7 @@ test.describe('API request deduplication (SWR cache)', () => {
     expect(requests.length).toBeGreaterThan(initialCount);
   });
 
-  test('navigating between sections does not re-fetch AQI data', async ({ page }) => {
+  test('navigating between sections does not re-fetch AQI data', async ({ page, isMobile }) => {
     const requests = [];
 
     await interceptApis(page);
@@ -83,7 +83,9 @@ test.describe('API request deduplication (SWR cache)', () => {
       if (req.url().includes('air-quality-api.open-meteo.com')) requests.push(req.url());
     });
 
+    if (isMobile) await page.locator('.hamburger-btn').click();
     await page.getByRole('button', { name: 'Quiz' }).click();
+    if (isMobile) await page.locator('.hamburger-btn').click();
     await page.getByRole('button', { name: 'Home' }).click();
     await page.waitForTimeout(1_000);
 

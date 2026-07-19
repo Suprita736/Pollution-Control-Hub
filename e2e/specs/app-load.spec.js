@@ -29,9 +29,12 @@ test.describe('Initial application load', () => {
     await expect(hero).toContainText('Pollution Control Hub');
   });
 
-  test('renders the section navigation bar', async ({ mockPage }) => {
+  test('renders the section navigation bar', async ({ mockPage, isMobile }) => {
     const nav = mockPage.locator('nav[aria-label="Main sections"]');
     await expect(nav).toBeVisible();
+    if (isMobile) {
+      await mockPage.locator('.hamburger-btn').click();
+    }
     const expectedLabels = ['Home', 'Quiz', 'Game', 'Community', 'History'];
     for (const label of expectedLabels) {
       await expect(nav.getByRole('button', { name: label })).toBeVisible();
@@ -50,42 +53,66 @@ test.describe('Section navigation', () => {
     await expect(mockPage.locator('[data-testid="dashboard"]')).toBeVisible();
   });
 
-  test('clicking Quiz navigates to the quiz section', async ({ mockPage }) => {
+  test('clicking Quiz navigates to the quiz section', async ({ mockPage, isMobile }) => {
+    if (isMobile) {
+      await mockPage.locator('.hamburger-btn').click();
+    }
     await mockPage.getByRole('button', { name: 'Quiz' }).click();
     await expect(mockPage.locator('[data-testid="quiz-section"]')).toBeVisible({ timeout: 5_000 });
     await expect(mockPage.locator('[data-testid="dashboard"]')).not.toBeVisible();
   });
 
-  test('clicking Community navigates to community hub', async ({ mockPage }) => {
+  test('clicking Community navigates to community hub', async ({ mockPage, isMobile }) => {
+    if (isMobile) {
+      await mockPage.locator('.hamburger-btn').click();
+    }
     await mockPage.getByRole('button', { name: 'Community' }).click();
     await expect(mockPage.locator('[data-testid="community-hub"]')).toBeVisible({ timeout: 5_000 });
   });
 
-  test('clicking History navigates to historical analysis', async ({ mockPage }) => {
+  test('clicking History navigates to historical analysis', async ({ mockPage, isMobile }) => {
+    if (isMobile) {
+      await mockPage.locator('.hamburger-btn').click();
+    }
     await mockPage.getByRole('button', { name: 'History' }).click();
     await expect(mockPage.locator('[data-testid="historical-analysis"]')).toBeVisible({ timeout: 5_000 });
   });
 
-  test('clicking Game navigates to the game section', async ({ mockPage }) => {
+  test('clicking Game navigates to the game section', async ({ mockPage, isMobile }) => {
+    if (isMobile) {
+      await mockPage.locator('.hamburger-btn').click();
+    }
     await mockPage.getByRole('button', { name: 'Game' }).click();
     await expect(mockPage.locator('[data-testid="aqi-mission-game"]')).toBeVisible({ timeout: 5_000 });
   });
 
-  test('active nav button has the "active" CSS class', async ({ mockPage }) => {
+  test('active nav button has the "active" CSS class', async ({ mockPage, isMobile }) => {
+    if (isMobile) {
+      await mockPage.locator('.hamburger-btn').click();
+    }
     const quizBtn = mockPage.getByRole('button', { name: 'Quiz', exact: true });
     await quizBtn.click();
     await expect(quizBtn).toHaveClass(/active/);
   });
 
-  test('navigating back to Home re-renders the dashboard', async ({ mockPage }) => {
+  test('navigating back to Home re-renders the dashboard', async ({ mockPage, isMobile }) => {
+    if (isMobile) {
+      await mockPage.locator('.hamburger-btn').click();
+    }
     await mockPage.getByRole('button', { name: 'Quiz' }).click();
+    if (isMobile) {
+      await mockPage.locator('.hamburger-btn').click();
+    }
     await mockPage.getByRole('button', { name: 'Home' }).click();
     await expect(mockPage.locator('[data-testid="dashboard"]')).toBeVisible({ timeout: 5_000 });
   });
 
-  test('section navigation works without crashing', async ({ mockPage }) => {
+  test('section navigation works without crashing', async ({ mockPage, isMobile }) => {
     const sections = ['Quiz', 'Community', 'History', 'Game', 'Home'];
     for (const section of sections) {
+      if (isMobile) {
+        await mockPage.locator('.hamburger-btn').click();
+      }
       await mockPage.getByRole('button', { name: section, exact: true }).click();
       await mockPage.waitForTimeout(300);
     }
