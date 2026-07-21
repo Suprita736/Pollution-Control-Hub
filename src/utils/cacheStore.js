@@ -19,9 +19,13 @@ function openDB() {
           keyPath: 'key',
         });
 
+
         store.createIndex('timestamp', 'timestamp', {
           unique: false,
         });
+
+        store.createIndex('timestamp', 'timestamp', { unique: false });
+
       }
     };
 
@@ -32,6 +36,17 @@ function openDB() {
 
     request.onerror = () => reject(request.error);
   });
+}
+
+async function getObjectStore(mode = 'readonly') {
+  const database = await openDB();
+  const transaction = database.transaction(STORE_NAME, mode);
+  return transaction.objectStore(STORE_NAME);
+}
+
+async function executeStoreOperation(mode, operation) {
+  const store = await getObjectStore(mode);
+  return operation(store);
 }
 
 const inFlight = new Map();
@@ -84,6 +99,7 @@ export const cacheStore = {
   },
 
   async get(key) {
+
     if (memoryCache.has(key)) {
       return memoryCache.get(key);
     }
@@ -94,6 +110,16 @@ export const cacheStore = {
       return new Promise((resolve) => {
         const tx = database.transaction(STORE_NAME, 'readonly');
         const request = tx.objectStore(STORE_NAME).get(key);
+
+    if (memoryCache.has(key)) return memoryCache.get(key);
+
+    try {
+      return new Promise(async (resolve) => {
+        const request = await executeStoreOperation(
+          'readonly',
+          (store) => store.get(key)
+        );
+
 
         request.onsuccess = () => {
           const result = request.result;
@@ -113,8 +139,10 @@ export const cacheStore = {
   },
 
   async set(key, data) {
+
     // Run cleanup in the background without blocking writes.
     cleanupExpiredEntries().catch(() => {});
+
 
     const entry = {
       key,
@@ -125,10 +153,17 @@ export const cacheStore = {
     memoryCache.set(key, entry);
 
     try {
+
       const database = await openDB();
       const tx = database.transaction(STORE_NAME, 'readwrite');
 
       tx.objectStore(STORE_NAME).put(entry);
+
+      await executeStoreOperation(
+        'readwrite',
+        (store) => store.put(entry)
+      );
+
     } catch (err) {
       console.warn('IndexedDB write failed:', err);
     }
@@ -139,10 +174,17 @@ export const cacheStore = {
       memoryCache.delete(key);
 
       try {
+
         const database = await openDB();
         const tx = database.transaction(STORE_NAME, 'readwrite');
 
         tx.objectStore(STORE_NAME).delete(key);
+
+        await executeStoreOperation(
+          'readwrite',
+          (store) => store.delete(key)
+        );
+
       } catch (err) {
         console.warn('IndexedDB delete failed:', err);
       }
@@ -150,10 +192,17 @@ export const cacheStore = {
       memoryCache.clear();
 
       try {
+
         const database = await openDB();
         const tx = database.transaction(STORE_NAME, 'readwrite');
 
         tx.objectStore(STORE_NAME).clear();
+
+        await executeStoreOperation(
+          'readwrite',
+          (store) => store.clear()
+        );
+
       } catch (err) {
         console.warn('IndexedDB clear failed:', err);
       }
@@ -163,9 +212,13 @@ export const cacheStore = {
   async isStale(key, ttl) {
     const cached = memoryCache.get(key) || await this.get(key);
 
+
     if (!cached) {
       return true;
     }
+
+    if (!cached) return true;
+
 
     return Date.now() - cached.timestamp >= ttl;
   },
@@ -175,9 +228,13 @@ export const cacheStore = {
   },
 
   async deduplicate(key, fetcher) {
+
     if (!key) {
       return null;
     }
+
+    if (!key) return null;
+
 
     if (inFlight.has(key)) {
       return inFlight.get(key);
