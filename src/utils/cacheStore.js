@@ -31,8 +31,15 @@ function openDB() {
   });
 }
 
-function handleIndexedDBError(operation, error) {
-  console.warn(`[cacheStore] IndexedDB ${operation} failed:`, error);
+async function getObjectStore(mode = 'readonly') {
+  const database = await openDB();
+  const transaction = database.transaction(STORE_NAME, mode);
+  return transaction.objectStore(STORE_NAME);
+}
+
+async function executeStoreOperation(mode, operation) {
+  const store = await getObjectStore(mode);
+  return operation(store);
 }
 
 const inFlight = new Map();
@@ -47,11 +54,11 @@ export const cacheStore = {
     if (memoryCache.has(key)) return memoryCache.get(key);
 
     try {
-      const database = await openDB();
-
-      return new Promise((resolve) => {
-        const tx = database.transaction(STORE_NAME, 'readonly');
-        const request = tx.objectStore(STORE_NAME).get(key);
+      return new Promise(async (resolve) => {
+        const request = await executeStoreOperation(
+          'readonly',
+          (store) => store.get(key)
+        );
 
         request.onsuccess = () => {
           const result = request.result;
@@ -63,10 +70,7 @@ export const cacheStore = {
           resolve(result || null);
         };
 
-        request.onerror = (event) => {
-          handleIndexedDBError('read', event.target.error);
-          resolve(null);
-        };
+        request.onerror = () => resolve(null);
       });
     } catch (error) {
       handleIndexedDBError('open/read', error);
@@ -84,16 +88,12 @@ export const cacheStore = {
     memoryCache.set(key, entry);
 
     try {
-      const database = await openDB();
-      const tx = database.transaction(STORE_NAME, 'readwrite');
-
-      tx.objectStore(STORE_NAME).put(entry);
-
-      tx.onerror = (event) => {
-        handleIndexedDBError('write', event.target.error);
-      };
-    } catch (error) {
-      handleIndexedDBError('write', error);
+      await executeStoreOperation(
+        'readwrite',
+        (store) => store.put(entry)
+      );
+    } catch (err) {
+      console.warn('IndexedDB write failed:', err);
     }
   },
 
@@ -102,31 +102,23 @@ export const cacheStore = {
       memoryCache.delete(key);
 
       try {
-        const database = await openDB();
-        const tx = database.transaction(STORE_NAME, 'readwrite');
-
-        tx.objectStore(STORE_NAME).delete(key);
-
-        tx.onerror = (event) => {
-          handleIndexedDBError('delete', event.target.error);
-        };
-      } catch (error) {
-        handleIndexedDBError('delete', error);
+        await executeStoreOperation(
+          'readwrite',
+          (store) => store.delete(key)
+        );
+      } catch (err) {
+        console.warn('IndexedDB delete failed:', err);
       }
     } else {
       memoryCache.clear();
 
       try {
-        const database = await openDB();
-        const tx = database.transaction(STORE_NAME, 'readwrite');
-
-        tx.objectStore(STORE_NAME).clear();
-
-        tx.onerror = (event) => {
-          handleIndexedDBError('clear', event.target.error);
-        };
-      } catch (error) {
-        handleIndexedDBError('clear', error);
+        await executeStoreOperation(
+          'readwrite',
+          (store) => store.clear()
+        );
+      } catch (err) {
+        console.warn('IndexedDB clear failed:', err);
       }
     }
   },
