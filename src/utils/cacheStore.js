@@ -23,9 +23,6 @@ function openDB() {
         store.createIndex('timestamp', 'timestamp', {
           unique: false,
         });
-
-        store.createIndex('timestamp', 'timestamp', { unique: false });
-
       }
     };
 
@@ -98,29 +95,19 @@ export const cacheStore = {
     return memoryCache.get(key) || null;
   },
 
-  async get(key) {
+  get: async function(key) {
 
     if (memoryCache.has(key)) {
       return memoryCache.get(key);
     }
 
     try {
-      const database = await openDB();
+      const request = await executeStoreOperation(
+        'readonly',
+        (store) => store.get(key)
+      );
 
-      return new Promise((resolve) => {
-        const tx = database.transaction(STORE_NAME, 'readonly');
-        const request = tx.objectStore(STORE_NAME).get(key);
-
-    if (memoryCache.has(key)) return memoryCache.get(key);
-
-    try {
-      return new Promise(async (resolve) => {
-        const request = await executeStoreOperation(
-          'readonly',
-          (store) => store.get(key)
-        );
-
-
+      return await new Promise((resolve) => {
         request.onsuccess = () => {
           const result = request.result;
 
@@ -134,12 +121,12 @@ export const cacheStore = {
         request.onerror = () => resolve(null);
       });
     } catch (error) {
-      handleIndexedDBError('open/read', error);
+      console.warn('IndexedDB read failed:', error);
       return null;
     }
   },
 
-  async set(key, data) {
+  set: async function(key, data) {
 
     // Run cleanup in the background without blocking writes.
     cleanupExpiredEntries().catch(() => {});

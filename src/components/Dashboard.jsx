@@ -16,6 +16,7 @@ import { useRef, useState } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { getAQIBand, getPollutantColor } from "../services/airQualityService";
+import MorningBriefing from "./MorningBriefing";
 
 function shortTimeLabel(isoTime) {
   return new Date(isoTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -151,6 +152,7 @@ export default function Dashboard({
 
   return (
     <section data-testid="dashboard" className="panel dashboard" ref={reportRef}>
+      <MorningBriefing current={current} trend={trend} />
       <div className="panel-head">
         <div>
           <h2>Real-Time Pollution Dashboard</h2>
