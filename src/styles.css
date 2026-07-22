@@ -2597,6 +2597,95 @@ a {
   pointer-events: none;
 }
 
+/* ── Temporal label row ─────────────────────────────────── */
+.calendar-heatmap-labels {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
+  /* Matches the exact column structure of .calendar-heatmap */
+}
+
+.calendar-heatmap-label-cell {
+  /* Each label cell is as wide as one week column (14 px day + 4 px gap = 18 px) */
+  width: 14px;
+  flex-shrink: 0;
+  height: 14px;
+  position: relative;
+}
+
+.calendar-month-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+  line-height: 1;
+  user-select: none;
+  letter-spacing: 0.02em;
+}
+
+/* ── Year labels: rendered in place of the January month label ── */
+.calendar-year-label {
+  color: var(--brand);
+  font-weight: 700;
+  font-size: 0.6rem;
+}
+
+/* ── Year-start separator: a subtle left border on the column ── */
+.calendar-heatmap-week.calendar-year-start {
+  border-left: 2px solid var(--brand);
+  padding-left: 2px;
+  margin-left: 2px;
+}
+
+/* ── Adaptive Floating Portal Tooltip ───────────────────── */
+.calendar-floating-tooltip {
+  background: var(--ink);
+  color: var(--card);
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--line);
+  font-family: inherit;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: fadeIn 120ms ease forwards;
+}
+
+.calendar-tooltip-date {
+  font-size: 0.7rem;
+  opacity: 0.85;
+  font-weight: 500;
+  color: var(--card);
+}
+
+.calendar-tooltip-body {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.calendar-tooltip-badge {
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.7rem;
+  line-height: 1.2;
+}
+
+.calendar-tooltip-label {
+  font-weight: 600;
+  color: var(--card);
+}
+
+
 /* ==========================================================================
    Location Search (Autocomplete)
    ========================================================================== */
