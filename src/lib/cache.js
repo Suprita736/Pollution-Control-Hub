@@ -82,17 +82,24 @@ export class MultiLevelCache {
   }
 
   clear() {
-    this.memoryCache.clear();
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith(this.namespace)) {
-          localStorage.removeItem(k);
-        }
+  this.memoryCache.clear();
+
+  try {
+    const keysToRemove = [];
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+
+      if (key && key.startsWith(this.namespace)) {
+        keysToRemove.push(key);
       }
-    } catch (e) {
-      console.warn('Failed to clear localStorage cache:', e);
     }
+
+    keysToRemove.forEach((key) => {
+      localStorage.removeItem(key);
+    });
+  } catch (e) {
+    console.warn('Failed to clear localStorage cache:', e);
   }
 }
 
