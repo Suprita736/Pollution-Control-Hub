@@ -24,27 +24,33 @@ export class MultiLevelCache {
     return `${this.namespace}:fallback:${key}`;
   }
 
-  _evictIfNeeded() {
-    if (
-      this.maxEntries === Infinity ||
-      this.memoryCache.size < this.maxEntries
-    ) {
-      return;
-    }
-
-    // FIFO: remove the oldest inserted entry
-    const oldestKey = this.memoryCache.keys().next().value;
-
-    if (!oldestKey) {
-      return;
-    }
-
-    this.memoryCache.delete(oldestKey);
-
+  _readStorage(key) {
     try {
-      localStorage.removeItem(oldestKey);
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
     } catch (e) {
-      console.warn('Failed to evict localStorage cache entry:', e);
+      console.warn('Failed to read from localStorage cache:', e);
+      return null;
+    }
+  }
+
+  _writeStorage(
+    key,
+    value,
+    errorMessage = 'Failed to write to localStorage cache.'
+  ) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+      console.warn(errorMessage, e);
+    }
+  }
+
+  _removeStorage(key) {
+    try {
+      localStorage.removeItem(key);
+    } catch (e) {
+      console.warn('Failed to remove from localStorage cache:', e);
     }
   }
 
@@ -64,46 +70,33 @@ export class MultiLevelCache {
     }
 
     // 2. Check L2 Cache
-    try {
-      const l2Raw = localStorage.getItem(fullKey);
+    const l2Entry = this._readStorage(fullKey);
 
-      if (l2Raw) {
-        const l2Entry = JSON.parse(l2Raw);
-
-        if (now < l2Entry.expiresAt) {
-          // Backfill L1 Cache
-          this.memoryCache.set(fullKey, l2Entry);
-          return l2Entry.data;
-        }
-
-        localStorage.removeItem(fullKey);
+    if (l2Entry) {
+      if (now < l2Entry.expiresAt) {
+        // Backfill L1 Cache
+        this.memoryCache.set(fullKey, l2Entry);
+        return l2Entry.data;
       }
-    } catch (e) {
-      console.warn('Failed to read from localStorage cache:', e);
+
+      this._removeStorage(fullKey);
     }
 
     return null;
   }
 
   getFallback(key) {
-    const fallbackKey = this._getFallbackKey(key);
-
-    try {
-      const raw = localStorage.getItem(fallbackKey);
-
-      if (raw) {
-        return JSON.parse(raw);
-      }
-    } catch (e) {
-      console.warn('Failed to read fallback from localStorage cache:', e);
-    }
-
-    return null;
+    return this._readStorage(this._getFallbackKey(key));
   }
 
   set(key, data, ttlMs = this.defaultTTL) {
     const fullKey = this._getKey(key);
     const expiresAt = Date.now() + ttlMs;
+
+    const entry = {
+      data,
+      expiresAt,
+    };
 
     const entry = {
       data,
@@ -116,35 +109,44 @@ export class MultiLevelCache {
     // Store in L1 cache
     this.memoryCache.set(fullKey, entry);
 
-    // Store in L2 cache
-    try {
-      localStorage.setItem(fullKey, JSON.stringify(entry));
-      localStorage.setItem(
-        this._getFallbackKey(key),
-        JSON.stringify(data)
-      );
-    } catch (e) {
-      console.warn(
-        'Failed to write to localStorage cache. Storage might be full:',
-        e
-      );
-    }
+    // 2. Set L2
+    this._writeStorage(
+      fullKey,
+      entry,
+      'Failed to write to localStorage cache. Storage might be full:'
+    );
+
+    this._writeStorage(
+      this._getFallbackKey(key),
+      data,
+      'Failed to write to localStorage cache. Storage might be full:'
+    );
   }
 
   clear() {
     this.memoryCache.clear();
 
     try {
+      const keysToRemove = [];
+
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
 
         if (key && key.startsWith(this.namespace)) {
-          localStorage.removeItem(key);
+          keysToRemove.push(key);
         }
       }
+
+      keysToRemove.forEach((key) => this._removeStorage(key));
     } catch (e) {
       console.warn('Failed to clear localStorage cache:', e);
     }
+
+    keysToRemove.forEach((key) => {
+      localStorage.removeItem(key);
+    });
+  } catch (e) {
+    console.warn('Failed to clear localStorage cache:', e);
   }
 }
 
